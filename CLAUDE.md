@@ -23,6 +23,13 @@ These rules apply to every file you write or edit. No exceptions.
 - Every query must be scoped to the authenticated user's ID — users must never be able to access another user's data.
 - See `docs/data-fetching.md` for the full data fetching standard and required patterns.
 
+### Data Mutations
+- All database mutations must go through helper functions in `/data`, using Drizzle ORM. No raw SQL.
+- All mutations must be triggered via Server Actions defined in colocated `actions.ts` files.
+- Server Action parameters must be explicitly typed — never use `FormData`.
+- All Server Actions must validate their arguments with Zod before proceeding.
+- See `docs/data-mutations.md` for the full mutations standard and required patterns.
+
 ### UI Components
 - **Only shadcn/ui components** may be used for UI. Do not create custom components.
 - Install missing components with `npx shadcn@latest add <component>`.
@@ -32,6 +39,11 @@ These rules apply to every file you write or edit. No exceptions.
 ### Dates
 - All dates must be formatted with `date-fns` using the `do MMM yyyy` format (e.g. `1st Sep 2025`).
 - Never use `Date.toLocaleDateString`, `Intl.DateTimeFormat`, or any other date API.
+
+### Authentication
+- This app uses **Clerk** for authentication. Do not use any other auth library or custom auth logic.
+- Get the current user in Server Components via `auth()` from `@clerk/nextjs/server`. Always redirect to `/sign-in` if `userId` is null.
+- See `docs/auth.md` for the full authentication standard and required patterns.
 
 ### React / Next.js
 - All pages and components are Server Components by default. Add `"use client"` only when interactivity requires it.

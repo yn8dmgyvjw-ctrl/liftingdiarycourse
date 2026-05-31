@@ -19,8 +19,8 @@ export async function getWorkoutsForUser(userId: string, date: string) {
       weightLbs: sets.weightLbs,
     })
     .from(workouts)
-    .innerJoin(workoutExercises, eq(workoutExercises.workoutId, workouts.id))
-    .innerJoin(exercises, eq(exercises.id, workoutExercises.exerciseId))
+    .leftJoin(workoutExercises, eq(workoutExercises.workoutId, workouts.id))
+    .leftJoin(exercises, eq(exercises.id, workoutExercises.exerciseId))
     .leftJoin(sets, eq(sets.workoutExerciseId, workoutExercises.id))
     .where(
       and(
@@ -31,27 +31,48 @@ export async function getWorkoutsForUser(userId: string, date: string) {
     )
     .orderBy(workoutExercises.orderIndex, sets.setNumber);
 
-  // Group into exercises with their sets
-  const exerciseMap = new Map<
+  // Group into workouts, each with their exercises and sets
+  const workoutMap = new Map<
     string,
-    { name: string; sets: { setNumber: number; reps: number | null; weightLbs: string | null }[] }
+    {
+      id: string;
+      name: string | null;
+      exercises: Map<string, { name: string; sets: { setNumber: number; reps: number | null; weightLbs: string | null }[] }>;
+    }
   >();
 
   for (const row of rows) {
-    if (!exerciseMap.has(row.workoutExerciseId)) {
-      exerciseMap.set(row.workoutExerciseId, {
-        name: row.exerciseName,
-        sets: [],
-      });
+    if (!workoutMap.has(row.workoutId)) {
+      workoutMap.set(row.workoutId, { id: row.workoutId, name: row.workoutName, exercises: new Map() });
     }
-    if (row.setNumber !== null) {
-      exerciseMap.get(row.workoutExerciseId)!.sets.push({
-        setNumber: row.setNumber,
-        reps: row.reps,
-        weightLbs: row.weightLbs,
-      });
+    const workout = workoutMap.get(row.workoutId)!;
+
+    if (row.workoutExerciseId && row.exerciseName) {
+      if (!workout.exercises.has(row.workoutExerciseId)) {
+        workout.exercises.set(row.workoutExerciseId, { name: row.exerciseName, sets: [] });
+      }
+      if (row.setNumber !== null) {
+        workout.exercises.get(row.workoutExerciseId)!.sets.push({
+          setNumber: row.setNumber,
+          reps: row.reps,
+          weightLbs: row.weightLbs,
+        });
+      }
     }
   }
 
-  return Array.from(exerciseMap.values());
+  return Array.from(workoutMap.values()).map((w) => ({
+    id: w.id,
+    name: w.name,
+    exercises: Array.from(w.exercises.values()),
+  }));
+}
+
+export async function createWorkout(input: {
+  userId: string;
+  name: string;
+  startedAt: Date;
+}) {
+  const [workout] = await db.insert(workouts).values(input).returning({ id: workouts.id });
+  return workout;
 }
