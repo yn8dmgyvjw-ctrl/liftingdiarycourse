@@ -10,6 +10,7 @@ export default function DatePicker({ value }: { value: string }) {
     const params = new URLSearchParams();
     params.set("date", e.target.value);
     router.push(`${pathname}?${params.toString()}`);
+    router.refresh();
   }
 
   return (

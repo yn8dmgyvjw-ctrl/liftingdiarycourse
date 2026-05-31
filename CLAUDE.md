@@ -17,6 +17,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 These rules apply to every file you write or edit. No exceptions.
 
+### Data Fetching
+- **Server Components only.** Never fetch data in route handlers, client components, or via any client-side library.
+- All database queries must go through helper functions in `/data`, using Drizzle ORM. No raw SQL.
+- Every query must be scoped to the authenticated user's ID — users must never be able to access another user's data.
+- See `docs/data-fetching.md` for the full data fetching standard and required patterns.
+
 ### UI Components
 - **Only shadcn/ui components** may be used for UI. Do not create custom components.
 - Install missing components with `npx shadcn@latest add <component>`.
