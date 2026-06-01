@@ -76,3 +76,22 @@ export async function createWorkout(input: {
   const [workout] = await db.insert(workouts).values(input).returning({ id: workouts.id });
   return workout;
 }
+
+export async function getWorkoutById(workoutId: string, userId: string) {
+  const [workout] = await db
+    .select()
+    .from(workouts)
+    .where(and(eq(workouts.id, workoutId), eq(workouts.userId, userId)));
+  return workout ?? null;
+}
+
+export async function updateWorkout(
+  workoutId: string,
+  userId: string,
+  input: { name: string; startedAt: Date }
+) {
+  await db
+    .update(workouts)
+    .set(input)
+    .where(and(eq(workouts.id, workoutId), eq(workouts.userId, userId)));
+}
